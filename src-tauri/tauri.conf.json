@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "xmainv",
+        "theme": "Dark",
         "width": 800,
         "height": 600
       }
