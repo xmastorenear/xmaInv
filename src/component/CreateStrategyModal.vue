@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-// Теперь передаем объект с именем и цветом
 const emit = defineEmits<{
   (e: 'create', payload: { name: string, color: string }): void
 }>();
 
 const inputName = ref('');
-// Список доступных цветов для выбора
+
 const colors = ['#00c087', '#ff5f56', '#ffbd2e', '#4facfe', '#a166ab', '#f87171'];
 const selectedColor = ref(colors[0]);
 
@@ -34,7 +33,6 @@ function submit() {
         autofocus
     >
 
-    <!-- Выбор цвета -->
     <div class="color-picker">
       <div
         v-for="color in colors"
@@ -105,5 +103,4 @@ button {
   font-weight: 700;
   cursor: pointer;
 }
-/* ... остальные ваши стили ... */
 </style>

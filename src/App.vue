@@ -2,7 +2,7 @@
     import { ref, onMounted } from "vue";
     import { invoke } from "@tauri-apps/api/core";
     import StrategySelector from "./component/StrategySelector.vue";
-    import CreateStrategyModal from "./component/createStrategyModal.vue";
+    import CreateStrategyModal from "./component/CreateStrategyModal.vue";
 
     interface Strategy {
         id: number;
@@ -10,13 +10,11 @@
         color: string;
     }
 
-    // Состояния приложения
     const strategy = ref<Strategy | null>(null);
     const allStrategies = ref<Strategy[]>([]);
     const isLoading = ref(true);
     const showModal = ref(false);
 
-    // Загрузка данных при старте
     onMounted(async () => {
         try {
             const data = await invoke<{ strategy: Strategy | null, all_strategies?: Strategy[] }>('get_data');
@@ -33,7 +31,6 @@
         }
     });
 
-    // Создание новой стратегии
     async function handleCreate(payload: { name: string, color: string }) {
         try {
             const newStrategy = await invoke<Strategy>('create_strategy', payload);
@@ -47,7 +44,6 @@
         }
     }
 
-    // Удаление стратегии
     async function handleDelete(id: number) {
         try {
             await invoke('delete_strategy', { id });
@@ -73,7 +69,6 @@
         <div v-if="isLoading" class="loader">Инициализация...</div>
 
         <div v-else class="main-content">
-            <!-- Модальное окно создания -->
             <Transition name="modal-fade">
                 <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
                     <CreateStrategyModal @create="handleCreate"/>
@@ -109,7 +104,6 @@
 </template>
 
 <style>
-    /* Глобальные стили приложения */
     html, body, #app {
         margin: 0;
         padding: 0;
@@ -133,7 +127,6 @@
         background: #0f1113;
     }
 
-    /* Хедер */
     .header-row {
         display: flex;
         justify-content: space-between;
@@ -159,7 +152,6 @@
         min-width: 140px;
     }
 
-    /* Модальное окно и оверлей */
     .modal-overlay {
         position: fixed;
         inset: 0;
@@ -171,7 +163,6 @@
         backdrop-filter: blur(8px);
     }
 
-    /* Рабочая область */
     .workspace {
         flex: 1;
         padding: 10px;
@@ -189,7 +180,7 @@
         background-color: #000000;
     }
 
-    /* Анимации переходов */
+
     .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
     .modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 

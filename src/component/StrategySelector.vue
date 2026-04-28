@@ -7,13 +7,11 @@
         color: string;
     }
 
-    // Принимаем данные из родителя
     defineProps<{
         allStrategies: Strategy[];
         activeStrategy: Strategy | null;
     }>();
 
-    // Передаем события родителю
     const emit = defineEmits<{
         (e: 'select', s: Strategy): void;
         (e: 'delete', id: number): void;
@@ -82,7 +80,7 @@
 </template>
 
 <style scoped>
-    /* Стили только для этого компонента */
+
     .strategy-dots { display: flex; align-items: center; gap: 14px; }
     .dot-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; }
     .dot {
