@@ -1,0 +1,15 @@
+{
+    "strategy": {
+        "title": "Strategy",
+        "create": "Create new",
+        "delete": "Delete strategy",
+        "select": "Select a strategy",
+        "newStrategy": "New strategy",
+        "createStrategy": "Create strategy",
+        "enterName": "Enter a name and select a color",
+        "examplePlaceHolder": "For example: BTC scalping",
+        "init": "Initialization...",
+        "selectOrCreateStrategy": "Select or create a strategy",
+        "workPlace": "Work place"
+    }
+}
