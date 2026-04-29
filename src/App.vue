@@ -3,6 +3,7 @@
     import { invoke } from "@tauri-apps/api/core";
     import StrategySelector from "./component/StrategySelector.vue";
     import CreateStrategyModal from "./component/CreateStrategyModal.vue";
+    import LanguageSwitcher from "./component/LanguageSwitcher.vue";
 
     interface Strategy {
         id: number;
@@ -66,7 +67,7 @@
 
 <template>
     <div class="container">
-        <div v-if="isLoading" class="loader">Инициализация...</div>
+        <div v-if="isLoading" class="loader">{{ $t('strategy.init') }}</div>
 
         <div v-else class="main-content">
             <Transition name="modal-fade">
@@ -89,13 +90,16 @@
                         @open-create="showModal = true"
                     />
                 </div>
+                <div class="header-right">
+                    <LanguageSwitcher />
+                </div>
             </header>
 
             <main class="workspace">
                 <Transition name="fade" mode="out-in">
                     <div :key="strategy?.id || 'none'" class="empty-view">
-                        <span v-if="strategy">Рабочая область: {{ strategy.name }}</span>
-                        <span v-else>Выберите или создайте стратегию</span>
+                        <span v-if="strategy">{{$t('strategy.workPlace')}}: {{ strategy.name }}</span>
+                        <span v-else>{{$t('strategy.selectOrCreateStrategy')}}</span>
                     </div>
                 </Transition>
             </main>
@@ -140,6 +144,12 @@
     }
 
     .header-left {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+    }
+
+    .header-right {
         display: flex;
         align-items: center;
         gap: 40px;
