@@ -10,10 +10,32 @@ pub struct Strategy {
     pub color: String,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Source {
+    pub id: u32,
+    pub strategy_id: u32,
+    pub name: String,
+    pub icon_url: String,
+    pub total_balance: f64,
+    pub profit_loss: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Transaction {
+    pub id: u32,
+    pub source_id: u32,
+    pub amount: f64,
+    pub timestamp: String,
+    pub description: String,
+}
+
+// ОСТАВЛЯЕМ ТОЛЬКО ОДНУ СТРУКТУРУ AppData
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct AppData {
     pub strategy: Option<Strategy>,
     pub all_strategies: Vec<Strategy>,
+    pub sources: Vec<Source>,
+    pub transactions: Vec<Transaction>,
 }
 
 impl AppData {
@@ -28,7 +50,7 @@ impl AppData {
         }
 
         let mut file_path = app_data_dir;
-        file_path.push("storage2.json");
+        file_path.push("storage3.json"); // Вернул стандартное имя, если нужно
         file_path
     }
 
