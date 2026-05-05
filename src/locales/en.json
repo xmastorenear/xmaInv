@@ -1,4 +1,15 @@
 {
+    "common": {
+        "loading": "Loading...",
+        "create": "Create",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "save": "Save",
+        "confirm": "Confirm",
+        "deposit": "Deposit",
+        "withdraw": "Withdraw",
+        "rename": "Rename"
+    },
     "strategy": {
         "title": "Strategy",
         "create": "Create new",
@@ -10,6 +21,17 @@
         "examplePlaceHolder": "For example: BTC scalping",
         "init": "Initialization...",
         "selectOrCreateStrategy": "Select or create a strategy",
-        "workPlace": "Work place"
+        "workPlace": "Work place",
+        "sources": "Funding Sources",
+        "addFirstSource": "Add first source",
+        "selectToStart": "Select a strategy to start",
+        "noSources": "No sources in this strategy yet"
+    },
+    "source": {
+        "newSource": "New Source",
+        "enterName": "Enter broker or exchange name",
+        "placeholder": "Example: Binance or Kraken",
+        "balance": "Balance",
+        "amount": "Amount"
     }
 }
