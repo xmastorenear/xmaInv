@@ -15,6 +15,7 @@
     const emit = defineEmits<{
         (e: 'deposit'): void;
         (e: 'withdraw'): void;
+        (e: 'contextmenu', event: MouseEvent): void;
     }>();
 
     const formatCurrency = (val: number) => {
@@ -28,7 +29,7 @@
 
 
 <template>
-    <div class="source-card">
+    <div class="source-card" @contextmenu.prevent="emit('contextmenu', $event)">
         <div class="action-btn deposit" @click.stop="handleDeposit">+</div>
         <div class="action-btn withdraw" @click.stop="handleWithdraw">−</div>
 

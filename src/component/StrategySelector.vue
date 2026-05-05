@@ -17,6 +17,7 @@
         (e: 'select', s: Strategy): void;
         (e: 'delete', id: number): void;
         (e: 'open-create'): void;
+        (e: 'rename', id: number, newName: string): void;
         (e: 'refresh'): void;
     }>();
 
@@ -64,19 +65,21 @@
     };
 
     const handleRename = async () => {
-        if (strategyIdToOp.value === null || !newName.value.trim()) return;
+        debugger;
+        if (strategyIdToOp.value !== null && newName.value.trim()) {
+            emit('rename', strategyIdToOp.value, newName.value.trim());
+            showRenameModal.value = false;
+        }
 
         try {
             await invoke('rename_strategy', {
                 id: strategyIdToOp.value,
-                newName: newName.value.trim()
+                new_name: newName.value.trim()
             });
 
-            // Обновляем имя локально в массиве
             const s = props.allStrategies.find(item => item.id === strategyIdToOp.value);
             if (s) s.name = newName.value.trim();
 
-            // Если переименовали текущую активную — просим родителя обновить данные
             if (props.activeStrategy?.id === strategyIdToOp.value) {
                 emit('refresh');
             }
