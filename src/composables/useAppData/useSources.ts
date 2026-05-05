@@ -8,27 +8,26 @@ export function useSources(activeStrategy: Ref<Strategy | null>) {
     const showSourceRenameModal = ref(false);
     const newSourceName = ref('');
 
-    const menuVisible = ref(false);
-    const menuX = ref(0);
-    const menuY = ref(0);
+    const sourceMenuVisible = ref(false); // Было menuVisible
+    const sourceMenuX = ref(0);           // Было menuX
+    const sourceMenuY = ref(0);           // Было menuY
     const sourceIdToOp = ref<number | null>(null);
 
     const filteredSources = computed(() => {
         if (!activeStrategy.value) return [];
         return allSources.value.filter(s => s.strategy_id === activeStrategy.value!.id);
     });
-
     const openSourceMenu = async (e: MouseEvent, id: number) => {
         e.preventDefault();
         e.stopPropagation();
         sourceIdToOp.value = id;
-        menuX.value = e.clientX;
-        menuY.value = e.clientY;
-        menuVisible.value = true;
+        sourceMenuX.value = e.clientX; // Используем новые имена
+        sourceMenuY.value = e.clientY;
+        sourceMenuVisible.value = true;
 
         await nextTick();
         const close = () => {
-            menuVisible.value = false;
+            sourceMenuVisible.value = false;
             window.removeEventListener('click', close);
         };
         window.addEventListener('click', close);
@@ -46,25 +45,22 @@ export function useSources(activeStrategy: Ref<Strategy | null>) {
             showSourceModal.value = false;
         } catch (e) { console.error(e); }
     };
-
     const handleDeleteSource = async () => {
         if (sourceIdToOp.value === null) return;
         try {
             await invoke('delete_source', { id: sourceIdToOp.value });
             allSources.value = allSources.value.filter(s => s.id !== sourceIdToOp.value);
-            menuVisible.value = false;
+            sourceMenuVisible.value = false;
         } catch (e) { console.error(e); }
     };
-
     const openSourceRename = () => {
         const target = allSources.value.find(s => s.id === sourceIdToOp.value);
         if (target) {
             newSourceName.value = target.name;
             showSourceRenameModal.value = true;
         }
-        menuVisible.value = false;
+        sourceMenuVisible.value = false;
     };
-
     const handleSourceRename = async () => {
         if (sourceIdToOp.value === null || !newSourceName.value.trim()) return;
         try {
@@ -77,7 +73,7 @@ export function useSources(activeStrategy: Ref<Strategy | null>) {
 
     return {
         allSources, filteredSources, showSourceModal, showSourceRenameModal,
-        newSourceName, menuVisible, menuX, menuY, sourceIdToOp,
+        newSourceName, sourceMenuVisible, sourceMenuX, sourceMenuY, sourceIdToOp,
         openSourceMenu, handleCreateSource, handleDeleteSource, openSourceRename, handleSourceRename
     };
 }

@@ -17,12 +17,9 @@
         (e: 'withdraw'): void;
         (e: 'contextmenu', event: MouseEvent): void;
     }>();
-
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('ru-RU').format(val) + ' ₽';
     };
-
-    // Вызываем объявленные события
     const handleDeposit = () => emit('deposit');
     const handleWithdraw = () => emit('withdraw');
 </script>
@@ -85,7 +82,6 @@
         opacity: 1;
     }
 
-    /* ПРАВИЛЬНО: Эффект размытия контента при наведении */
     .source-card:hover .card-content {
         filter: blur(1px);
         opacity: 0.3;
@@ -181,6 +177,7 @@
     }
 
     .deposit { left: 0; border-right: 1px solid rgba(0, 192, 135, 0.2); }
+
     .withdraw {
         right: 0;
         color: #f87171;
@@ -189,8 +186,10 @@
     }
 
     .action-btn:hover { background: #00c087; color: #000; }
+
     .withdraw:hover { background: #f87171; color: #000; }
 
     .positive { color: #00c087; }
+
     .negative { color: #f87171; }
 </style>

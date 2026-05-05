@@ -6,7 +6,6 @@ export function useStrategies() {
     const strategy = ref<Strategy | null>(null);
     const allStrategies = ref<Strategy[]>([]);
     const showModal = ref(false);
-
     const handleCreateStrategy = async (payload: { name: string, color: string }) => {
         try {
             const res = await invoke<Strategy>('create_strategy', payload);
@@ -15,7 +14,6 @@ export function useStrategies() {
             showModal.value = false;
         } catch (e) { console.error(e); }
     };
-
     const handleDeleteStrategy = async (id: number) => {
         try {
             await invoke('delete_strategy', { id });
@@ -26,7 +24,6 @@ export function useStrategies() {
             }
         } catch (e) { console.error(e); }
     };
-
     const handleRenameStrategy = async (id: number, newName: string) => {
         try {
             await invoke('rename_strategy', { id, new_name: newName });

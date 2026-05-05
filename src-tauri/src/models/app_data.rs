@@ -7,12 +7,16 @@ use tauri::Manager;
 use super::strategy::Strategy;
 use super::source::Source;
 use super::transaction::Transaction;
+use super::asset_group::AssetGroup;
+use super::asset::Asset;
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct AppData {
     pub strategy: Option<Strategy>,
     pub all_strategies: Vec<Strategy>,
     pub sources: Vec<Source>,
+    pub asset_groups: Vec<AssetGroup>,
+    pub assets: Vec<Asset>,
     pub transactions: Vec<Transaction>,
 }
 
@@ -22,7 +26,7 @@ impl AppData {
         if !app_data_dir.exists() {
             fs::create_dir_all(&app_data_dir).expect("Failed create dir");
         }
-        app_data_dir.join("storage3.json")
+        app_data_dir.join("storage4.json")
     }
 
     pub fn load(app_handle: &tauri::AppHandle) -> Self {

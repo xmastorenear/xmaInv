@@ -1,25 +1,29 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useAppData } from "./composables/useAppData/index.ts";
-
 import TheHeader from "./component/layout/TheHeader.vue";
 import SourcesBlock from "./component/sources/SourcesBlock.vue";
-
+import AssetsBlock from "./component/assets/AssetsBlock.vue";
 import CreateStrategyModal from "./component/CreateStrategyModal.vue";
 import CreateSourceModal from "./component/CreateSourceModal.vue";
+import CreateAssetGroupModal from "./component/assets/CreateAssetGroupModal.vue";
 import TransactionModal from "./component/TransactionModal.vue";
 
 const {
     strategy,
     allStrategies,
+    allAssets,
     filteredSources,
     isLoading,
     loadData,
     showModal,
     showSourceModal,
     showSourceRenameModal,
+    showAssetGroupModal,
     showTxModal,
-    menuVisible, menuX, menuY,
+    sourceMenuVisible,
+    sourceMenuX,
+    sourceMenuY,
     openSourceMenu,
     handleDeleteSource,
     openSourceRename,
@@ -32,22 +36,35 @@ const {
     handleCreateStrategy,
     handleDeleteStrategy,
     handleCreateSource,
-    handleRenameStrategy
+    handleCreateAssetGroup,
+    handleRenameStrategy,
+    filteredAssetGroups,
+    handleDeleteAssetGroup,
+    handleDeleteAsset,
+    handleBuyMoreAsset,
+    handleSellAsset
 } = useAppData();
 
 onMounted(loadData);
+
+const expandedGroupId = ref<number | null>(null);
+
+const handleExpand = (id: number) => {
+    expandedGroupId.value = expandedGroupId.value === id ? null : id;
+};
 </script>
 
 <template>
     <div class="container">
         <div v-if="isLoading" class="loader">{{ $t('common.loading') }}</div>
+        <div v-else class="main-content" :class="{ 'lock-ui': expandedGroupId !== null }">
 
-        <div v-else class="main-content">
+            <!-- Глобальные модальные окна верхнего уровня через Teleport -->
             <Teleport to="body">
                 <Transition name="fade-scale">
-                    <div v-if="menuVisible"
+                    <div v-if="sourceMenuVisible"
                          class="context-menu"
-                         :style="{ top: menuY + 'px', left: menuX + 'px' }">
+                         :style="{ top: sourceMenuY + 'px', left: sourceMenuX + 'px' }">
                         <div class="menu-item" @click="openSourceRename">
                             <i class="pi pi-pencil"></i>
                             <span>{{ $t('common.rename') }}</span>
@@ -68,10 +85,7 @@ onMounted(loadData);
 
                 <Transition name="modal-fade">
                     <div v-if="showSourceModal" class="modal-overlay" @click.self="showSourceModal = false">
-                        <CreateSourceModal
-                            @create="handleCreateSource"
-                            @close="showSourceModal = false"
-                        />
+                        <CreateSourceModal @create="handleCreateSource" @close="showSourceModal = false" />
                     </div>
                 </Transition>
 
@@ -100,8 +114,18 @@ onMounted(loadData);
                         />
                     </div>
                 </Transition>
+
+                <Transition name="modal-fade">
+                    <div v-if="showAssetGroupModal" class="modal-overlay" @click.self="showAssetGroupModal = false">
+                        <CreateAssetGroupModal
+                            @create="handleCreateAssetGroup"
+                            @close="showAssetGroupModal = false"
+                        />
+                    </div>
+                </Transition>
             </Teleport>
 
+            <!-- Шапка интерфейса -->
             <TheHeader
                 :active-strategy="strategy"
                 :all-strategies="allStrategies"
@@ -112,6 +136,7 @@ onMounted(loadData);
                 @refresh="loadData"
             />
 
+            <!-- Основная рабочая область -->
             <main class="workspace">
                 <SourcesBlock
                     v-if="strategy"
@@ -120,6 +145,20 @@ onMounted(loadData);
                     @add-source="showSourceModal = true"
                     @deposit="s => openTransactionModal(s, 'deposit')"
                     @withdraw="s => openTransactionModal(s, 'withdraw')"
+                />
+
+                <!-- БЛОК: Группы активов (Связка событий исправлена) -->
+                <AssetsBlock
+                    v-if="strategy"
+                    :asset-groups="filteredAssetGroups"
+                    :expanded-id="expandedGroupId"
+                    :all-assets="allAssets"
+                    @add-group="showAssetGroupModal = true"
+                    @expand="handleExpand"
+                    @delete="handleDeleteAssetGroup"
+                    @delete-asset="handleDeleteAsset"
+                    @buy-more="handleBuyMoreAsset"
+                    @sell-asset="handleSellAsset"
                 />
 
                 <div v-else class="empty-state">
@@ -149,8 +188,27 @@ onMounted(loadData);
     .menu-divider { height: 1px; background: #2d333b; margin: 4px 8px; }
 
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 99999; backdrop-filter: blur(8px); }
-    .modal-card { background: #1a1d21; padding: 30px; border-radius: 16px; border: 1px solid #2d333b; width: 100%; max-width: 380px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center; }
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100000 !important;
+        backdrop-filter: blur(8px);
+    }
+    .modal-card {
+        background: #1a1d21;
+        padding: 30px;
+        border-radius: 16px;
+        border: 1px solid #2d333b;
+        width: 100%;
+        max-width: 380px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        z-index: 100000 !important;
+    }
     .modal-card h2 { color: white; margin: 0 0 20px 0; font-size: 1.25rem; }
 
     .rename-input { width: 100%; padding: 14px; background: #0f1113; border: 1px solid #2d333b; border-radius: 10px; color: white; margin-bottom: 25px; font-size: 1rem; outline: none; box-sizing: border-box; }
@@ -167,4 +225,13 @@ onMounted(loadData);
     .fade-scale-enter-from, .fade-scale-leave-to { opacity: 0; transform: scale(0.95); }
 
     .loader { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; color: #444c56; }
+    .lock-ui .workspace {
+        /* Отключаем ховеры у всех карточек на фоне */
+        pointer-events: none;
+    }
+
+    /* Но возвращаем их для развернутого элемента */
+    .lock-ui .asset-type-card.expanded {
+        pointer-events: auto;
+    }
 </style>

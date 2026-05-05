@@ -20,7 +20,6 @@
             <span class="frame-label">{{ $t('strategy.sources') }}</span>
 
             <div class="sources-row">
-                <!-- 1. Рендерим существующие источники -->
                 <template v-if="sources.length > 0">
                     <SourceCard
                         v-for="s in sources"
@@ -31,15 +30,12 @@
                         @withdraw="emit('withdraw', s)"
                     />
 
-                    <!-- 2. Квадратная кнопка ПЛЮС в конце списка -->
                     <button class="add-source-card inline-variant" @click="emit('add-source')">
                         <i class="pi pi-plus"></i>
                     </button>
                 </template>
 
-                <!-- 3. Если источников НЕТ: большая кнопка с текстом -->
                 <div v-else class="add-source-card empty-state-variant" @click="emit('add-source')">
-
                     <span>{{ $t('strategy.addFirstSource') }}</span>
                 </div>
             </div>
@@ -59,7 +55,7 @@
     .frame-label {
         position: absolute;
         top: -10px; left: 20px;
-        background: #0f1113; /* Убедись, что совпадает с фоном рабочей области */
+        background: #0f1113;
         padding: 0 10px;
         color: #444c56;
         font-size: 0.7rem;
@@ -73,10 +69,9 @@
         flex-direction: row;
         gap: 12px;
         overflow-x: auto;
-        align-items: stretch; /* Растягивает элементы по высоте самого высокого */
+        align-items: stretch;
     }
 
-    /* ОБЩИЙ СТИЛЬ КАРТОЧКИ-КНОПКИ */
     .add-source-card {
         background: transparent;
         border: 2px dashed #2d333b;
@@ -91,13 +86,11 @@
         flex-shrink: 0;
     }
 
-    /* Вариант, когда источников много (квадрат в конце) */
     .inline-variant {
-        width: 97px; /* Можно сделать чуть уже основной карточки, либо 7vw */
-        height: 97px; /* Должно совпадать с высотой SourceCard (обычно ~65px-70px) */
+        width: 97px;
+        height: 97px;
     }
 
-    /* Вариант, когда список пуст */
     .empty-state-variant {
         width: 97px; height: 97px; border: 2px solid #2d333b; border-radius: 8px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;

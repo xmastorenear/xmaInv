@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import StrategySelector from "../StrategySelector.vue";
-import LanguageSwitcher from "../LanguageSwitcher.vue";
-import type { Strategy } from "../../types";
+    import StrategySelector from "../StrategySelector.vue";
+    import LanguageSwitcher from "../LanguageSwitcher.vue";
+    import type { Strategy } from "../../types";
 
-defineProps<{
-    activeStrategy: Strategy | null;
-    allStrategies: Strategy[];
-}>();
+    defineProps<{
+        activeStrategy: Strategy | null;
+        allStrategies: Strategy[];
+    }>();
 
-const emit = defineEmits<{
-    (e: 'select-strategy', s: Strategy): void;
-    (e: 'delete-strategy', id: number): void;
-    (e: 'open-create-strategy'): void;
-    (e: 'refresh'): void;
-}>();
+    const emit = defineEmits<{
+        (e: 'select-strategy', s: Strategy): void;
+        (e: 'delete-strategy', id: number): void;
+        (e: 'open-create-strategy'): void;
+        (e: 'refresh'): void;
+    }>();
 </script>
 
 <template>
@@ -41,7 +41,11 @@ const emit = defineEmits<{
 
 <style scoped>
     .header-row { display: flex; justify-content: space-between; align-items: center; height: 55px; background: #1a1d21; border-bottom: 1px solid #2d333b; }
+
     .header-left { display: flex; align-items: center; gap: 40px; margin-left: 25px;}
+
     .header-right { margin-right: 25px; }
+
     .strategy-info h1 { font-size: 1.1rem; color: #fff; margin: 0; min-width: 140px; }
+
 </style>

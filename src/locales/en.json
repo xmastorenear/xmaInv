@@ -25,7 +25,8 @@
         "sources": "Funding Sources",
         "addFirstSource": "Add first source",
         "selectToStart": "Select a strategy to start",
-        "noSources": "No sources in this strategy yet"
+        "noSources": "No sources in this strategy yet",
+        "assetGroups": "Asset Groups"
     },
     "source": {
         "newSource": "New Source",
@@ -33,5 +34,11 @@
         "placeholder": "Example: Binance or Kraken",
         "balance": "Balance",
         "amount": "Amount"
+    },
+    "asset": {
+        "newGroup": "New Asset Group",
+        "enterName": "Enter group name",
+        "placeholder": "Example: US Stocks or Crypto",
+        "deleteGroup": "Delete Group"
     }
 }

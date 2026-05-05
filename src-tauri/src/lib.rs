@@ -1,6 +1,6 @@
 pub mod models;
 
-use models::{AppData, Strategy, Source, Transaction};
+use models::{AppData, Strategy, Source, Transaction, AssetGroup, Asset};
 use std::sync::Mutex;
 use tauri::{Manager, State};
 
@@ -13,8 +13,41 @@ fn get_data(state: State<AppState>) -> AppData {
         strategy: data.strategy.clone(),
         all_strategies: data.all_strategies.clone(),
         sources: data.sources.clone(),
+        asset_groups: data.asset_groups.clone(),
         transactions: data.transactions.clone(),
+        assets: data.assets.clone(),
     }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn create_asset(
+    app_handle: tauri::AppHandle,
+    state: State<AppState>,
+    group_id: u32,
+    ticker: String,
+    amount: f64,
+    buy_price: f64,
+) -> Result<Asset, String> {
+    let mut data = state.0.lock().unwrap();
+
+    let new_id = data.assets.iter().map(|a| a.id).max().unwrap_or(0) + 1;
+    let new_asset = Asset {
+        id: new_id,
+        group_id,
+        ticker: ticker.to_uppercase(), // Переводим в верхний регистр (AAPL)
+        amount,
+        buy_price,
+    };
+
+    // Автоматически пересчитываем общую стоимость группы активов
+    if let Some(group) = data.asset_groups.iter_mut().find(|g| g.id == group_id) {
+        group.total_value += amount * buy_price;
+    }
+
+    data.assets.push(new_asset.clone());
+    data.save(&app_handle)?;
+
+    Ok(new_asset)
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -60,6 +93,34 @@ fn delete_strategy(app_handle: tauri::AppHandle, state: State<AppState>, id: u32
         }
     }
     data.save(&app_handle)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn delete_asset_group(app_handle: tauri::AppHandle, state: State<AppState>, id: u32) -> Result<(), String> {
+    let mut data = state.0.lock().unwrap();
+
+    // Удаляем саму группу
+    data.asset_groups.retain(|g| g.id != id);
+
+    // (Опционально) Удаляем связанные активы, если они уже есть в моделях
+    // data.assets.retain(|a| a.group_id != id);
+
+    data.save(&app_handle)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn delete_asset(app_handle: tauri::AppHandle, state: State<AppState>, id: u32) -> Result<(), String> {
+    let mut data = state.0.lock().unwrap();
+
+    // Удаляем конкретный актив из списка по его ID
+    // Примечание: Убедитесь, что массив в структуре AppData называется именно `assets`
+    data.assets.retain(|a| a.id != id);
+
+    // Сохраняем изменения в файл storage3.json
+    data.save(&app_handle)?;
+
+    println!("[DEBUG] Успешно удален актив с ID: {}", id);
+    Ok(())
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -124,6 +185,105 @@ fn add_transaction(app_handle: tauri::AppHandle, state: State<AppState>, source_
     data.save(&app_handle)
 }
 
+#[tauri::command(rename_all = "snake_case")]
+fn create_asset_group(
+    app_handle: tauri::AppHandle,
+    state: State<AppState>,
+    strategy_id: u32,
+    name: String,
+) -> Result<AssetGroup, String> {
+    let mut data = state.0.lock().unwrap();
+
+    // Генерируем новый ID
+    let new_id = data.asset_groups.iter().map(|g| g.id).max().unwrap_or(0) + 1;
+
+    let new_group = AssetGroup {
+        id: new_id,
+        strategy_id,
+        name,
+        total_value: 0.0, // Изначально группа пустая
+    };
+
+    data.asset_groups.push(new_group.clone());
+
+    // Сохраняем изменения в файл
+    data.save(&app_handle)?;
+
+    println!("[DEBUG] Создана группа активов: {} (ID: {})", new_group.name, new_group.id);
+    Ok(new_group)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn buy_more_asset(
+    app_handle: tauri::AppHandle,
+    state: State<AppState>,
+    id: u32,                     // Соответствует полю 'id' во Vue
+    added_amount: f64,           // Соответствует полю 'added_amount' во Vue
+    execution_price: f64         // Соответствует полю 'execution_price' во Vue
+) -> Result<(), String> {
+    let mut data = state.0.lock().unwrap();
+
+    let mut log_amount = 0.0;
+    let mut log_price = 0.0;
+    let mut found = false;
+
+    // Ищем актив в векторе
+    if let Some(asset) = data.assets.iter_mut().find(|a| a.id == id) {
+        let current_cost = asset.amount * asset.buy_price;
+        let added_cost = added_amount * execution_price;
+
+        asset.amount += added_amount;
+        asset.buy_price = (current_cost + added_cost) / asset.amount;
+
+        log_amount = asset.amount;
+        log_price = asset.buy_price;
+        found = true;
+    }
+
+    if found {
+        data.save(&app_handle)?;
+        println!("[DEBUG] Rust успешно записал докупку. Новое кол-во: {}, Цена: {}", log_amount, log_price);
+        Ok(())
+    } else {
+        Err("Asset not found in backend list".into())
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn sell_asset(
+    app_handle: tauri::AppHandle,
+    state: State<AppState>,
+    id: u32,
+    sell_amount: f64,
+    _execution_price: f64 // Цена продажи (можно использовать позже для фиксации финреза в транзакциях)
+) -> Result<(), String> {
+    let mut data = state.0.lock().unwrap();
+    let mut should_remove = false;
+    let mut found = false;
+
+    if let Some(asset) = data.assets.iter_mut().find(|a| a.id == id) {
+        found = true;
+        if asset.amount <= sell_amount {
+            should_remove = true;
+        } else {
+            asset.amount -= sell_amount;
+        }
+    }
+
+    if found {
+        if should_remove {
+            // Если позиция закрыта в ноль — удаляем из вектора базы данных
+            data.assets.retain(|a| a.id != id);
+        }
+        data.save(&app_handle)?;
+        println!("[DEBUG] Rust успешно обработал продажу актива ID {}", id);
+        Ok(())
+    } else {
+        Err("Asset not found in backend".into())
+    }
+}
+
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -141,7 +301,13 @@ pub fn run() {
             create_source,
             rename_source,
             delete_source,
-            add_transaction
+            add_transaction,
+            create_asset_group,
+            delete_asset_group,
+            create_asset,
+            delete_asset,
+            buy_more_asset,
+            sell_asset
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

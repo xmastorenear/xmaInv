@@ -86,14 +86,12 @@
 </template>
 
 <style scoped>
-    /* Скрываем стрелки в Chrome, Safari, Edge, Opera */
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
         -webkit-appearance: none;
         margin: 0;
     }
 
-    /* Скрываем стрелки в Firefox */
     input[type=number] {
         -moz-appearance: textfield;
     }
@@ -108,10 +106,15 @@
     }
 
     header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+
     .icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; }
+
     .icon.deposit { background: rgba(0, 192, 135, 0.1); color: #00c087; }
+
     .icon.withdraw { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+
     .title-group h2 { margin: 0; font-size: 1.2rem; color: white; }
+
     .title-group p { margin: 0; font-size: 0.85rem; color: #94a3b8; }
 
     .form-group { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
@@ -120,6 +123,7 @@
         position: relative;
         margin-bottom: 24px;
     }
+
     .amount-input input {
         width: 100%;
         background: #0f1113;
@@ -131,7 +135,6 @@
         text-align: center;
         outline: none;
         box-sizing: border-box;
-        /* Убираем стандартные тени и фоны браузера */
         appearance: none;
     }
 
@@ -145,24 +148,23 @@
         right: 20px;
         top: 50%;
         transform: translateY(-50%);
-        color: #444c56; /* Оставляем серым всегда */
+        color: #444c56;
         font-size: 1.2rem;
         pointer-events: none;
         user-select: none;
         z-index: 5;
-        /* Явно убираем фон, если он появился */
         background: transparent !important;
     }
 
     .input-wrapper.amount-input {
         position: relative;
-        /* Убедимся, что контейнер не имеет лишних фонов */
         background: transparent;
     }
 
-    /* Стили для даты */
     .datetime-wrapper { display: flex; flex-direction: column; gap: 6px; }
+
     .datetime-wrapper label { font-size: 0.7rem; color: #444c56; text-transform: uppercase; font-weight: bold; padding-left: 4px; }
+
     .datetime-input {
         background: #0f1113; border: 1px solid #2d333b; border-radius: 8px;
         padding: 10px; color: white; font-family: inherit; font-size: 0.9rem; outline: none;
@@ -170,9 +172,14 @@
     .datetime-input::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
 
     .actions { display: flex; gap: 12px; }
+
     button { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
+
     .btn-cancel { background: #2d333b; color: #94a3b8; }
+
     .btn-submit.deposit { background: #00c087; color: black; }
+
     .btn-submit.withdraw { background: #f87171; color: white; }
+
     button:disabled { opacity: 0.3; cursor: not-allowed; }
 </style>

@@ -21,16 +21,13 @@
         (e: 'refresh'): void;
     }>();
 
-    // Состояние меню
     const menuVisible = ref(false);
     const menuX = ref(0);
     const menuY = ref(0);
     const strategyIdToOp = ref<number | null>(null);
 
-    // Состояние переименования
     const showRenameModal = ref(false);
     const newName = ref('');
-
     const openMenu = async (e: MouseEvent, id: number) => {
         e.preventDefault();
         e.stopPropagation();
@@ -94,7 +91,6 @@
 <template>
     <div class="strategy-dots">
         <Teleport to="body">
-            <!-- Контекстное меню -->
             <Transition name="fade-scale">
                 <div v-if="menuVisible"
                      class="context-menu"
@@ -115,7 +111,6 @@
                 </div>
             </Transition>
 
-            <!-- Модалка переименования -->
             <Transition name="modal-fade">
                 <div v-if="showRenameModal" class="modal-overlay" @click.self="showRenameModal = false">
                     <div class="modal-card">
@@ -140,7 +135,6 @@
 
         <span class="selector-label">{{ $t('strategy.title') }}</span>
 
-        <!-- Список стратегий (кружки) -->
         <div v-for="s in allStrategies" :key="s.id" class="dot-wrapper">
             <span class="tooltip">{{ s.name }}</span>
             <div class="dot"
@@ -156,7 +150,6 @@
 </template>
 
 <style scoped>
-    /* Группа селектора */
     .strategy-dots {
         display: flex;
         align-items: center;
@@ -170,12 +163,12 @@
     .modal-overlay {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.75); /* Полупрозрачный черный */
+        background: rgba(0, 0, 0, 0.75);
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 10001; /* Выше, чем хедер и контекстное меню */
-        backdrop-filter: blur(4px); /* Размытие заднего плана для глубины */
+        z-index: 10001;
+        backdrop-filter: blur(4px);
     }
 
     .selector-label {
@@ -187,6 +180,7 @@
         margin-right: 4px;
         user-select: none;
     }
+
     .modal-card {
         background: #1a1d21;
         padding: 24px;
@@ -195,7 +189,7 @@
         width: 100%;
         max-width: 360px;
         text-align: center;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); /* Тень для объема */
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
     }
 
     .modal-card h2 {
@@ -204,8 +198,8 @@
         font-size: 1.25rem;
     }
 
-    /* Точки */
     .dot-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; }
+
     .dot {
         width: 14px;
         height: 14px;
@@ -215,50 +209,54 @@
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         opacity: 0.6;
     }
+
     .dot.active {
         opacity: 1;
         border-color: white;
         transform: scale(1.3);
         box-shadow: 0 0 10px v-bind('activeStrategy?.color || "transparent"');
     }
+
     .dot:hover { opacity: 1; transform: scale(1.2); }
 
-    /* Тултипы */
     .tooltip {
         position: absolute; top: 38px; background: #2d333b; color: white;
         padding: 6px 12px; border-radius: 6px; font-size: 11px;
         opacity: 0; pointer-events: none; transition: 0.2s ease;
         border: 1px solid #444c56; z-index: 100; white-space: nowrap;
     }
+
     .dot-wrapper:hover .tooltip { opacity: 1; transform: translateY(4px); }
 
-    /* Кнопки */
     .btn-add-dot {
         width: 24px; height: 24px; border: 1px dashed #444c56;
         background: transparent; color: #444c56; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
         cursor: pointer; transition: 0.2s;
     }
+
     .btn-add-dot:hover { color: #00c087; border-color: #00c087; background: rgba(0, 192, 135, 0.05); }
 
-    /* Контекстное меню */
     .context-menu {
         position: fixed; background: #1a1d21;
         border: 1px solid #444c56; border-radius: 10px;
         padding: 6px; z-index: 10000;
         box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5); min-width: 170px;
     }
+
     .menu-item {
         display: flex; align-items: center; gap: 10px;
         padding: 10px 14px; font-size: 13px; color: #94a3b8;
         cursor: pointer; border-radius: 6px; transition: 0.2s;
     }
     .menu-item:hover { background: #2d333b; color: white; }
+
     .menu-item.delete { color: #f87171; }
+
     .menu-item.delete:hover { background: rgba(248, 113, 113, 0.1); }
+
     .menu-divider { height: 1px; background: #2d333b; margin: 4px 8px; }
 
-    /* Модалка и инпут */
     .rename-input {
         width: 93%; padding: 12px; background: #0f1113;
         border: 1px solid #2d333b; border-radius: 8px;
@@ -267,10 +265,12 @@
     .rename-input:focus { border-color: #00c087; }
 
     .modal-actions { display: flex; gap: 12px; }
+
     .btn-submit { background: #00c087; color: black; border: none; flex: 1; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
     .btn-cancel { background: transparent; border: 1px solid #2d333b; color: #94a3b8; flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; }
 
-    /* Анимации */
     .fade-scale-enter-active, .fade-scale-leave-active { transition: all 0.15s ease; }
+
     .fade-scale-enter-from, .fade-scale-leave-to { opacity: 0; transform: scale(0.95) translateY(-5px); }
 </style>

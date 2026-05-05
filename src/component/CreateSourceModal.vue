@@ -1,19 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+    import { ref } from 'vue';
 
-const emit = defineEmits<{
-    (e: 'create', payload: { name: string }): void;
-    (e: 'close'): void;
-}>();
+    const emit = defineEmits<{
+        (e: 'create', payload: { name: string }): void;
+        (e: 'close'): void;
+    }>();
 
-const inputName = ref('');
-
-function submit() {
-    if (inputName.value.trim()) {
-        emit('create', { name: inputName.value.trim() });
-        inputName.value = '';
+    const inputName = ref('');
+    function submit() {
+        if (inputName.value.trim()) {
+            emit('create', { name: inputName.value.trim() });
+            inputName.value = '';
+        }
     }
-}
 </script>
 
 <template>
@@ -40,43 +39,47 @@ function submit() {
 </template>
 
 <style scoped>
-.modal-card {
-    background: #1a1d21;
-    padding: 2rem;
-    border-radius: 16px;
-    border: 1px solid #2d333b;
-    width: 100%;
-    max-width: 360px;
-    text-align: center;
-}
+    .modal-card {
+        background: #1a1d21;
+        padding: 2rem;
+        border-radius: 16px;
+        border: 1px solid #2d333b;
+        width: 100%;
+        max-width: 360px;
+        text-align: center;
+    }
 
-h2 { color: white; margin-bottom: 8px; }
-.subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 24px; }
+    h2 { color: white; margin-bottom: 8px; }
 
-input {
-    width: 100%;
-    padding: 12px;
-    background: #0f1113;
-    border: 1px solid #2d333b;
-    border-radius: 8px;
-    color: white;
-    margin-bottom: 20px;
-    box-sizing: border-box;
-}
+    .subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 24px; }
 
-.modal-actions { display: flex; gap: 12px; }
+    input {
+        width: 100%;
+        padding: 12px;
+        background: #0f1113;
+        border: 1px solid #2d333b;
+        border-radius: 8px;
+        color: white;
+        margin-bottom: 20px;
+        box-sizing: border-box;
+    }
 
-button {
-    flex: 1;
-    padding: 12px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s;
-}
+    .modal-actions { display: flex; gap: 12px; }
 
-.btn-submit { background: #00c087; color: black; border: none; }
-.btn-submit:disabled { opacity: 0.5; }
-.btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #2d333b; }
-.btn-cancel:hover { background: #2d333b; }
+    button {
+        flex: 1;
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-submit { background: #00c087; color: black; border: none; }
+
+    .btn-submit:disabled { opacity: 0.5; }
+
+    .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #2d333b; }
+
+    .btn-cancel:hover { background: #2d333b; }
 </style>

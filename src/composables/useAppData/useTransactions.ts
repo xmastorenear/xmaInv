@@ -6,13 +6,11 @@ export function useTransactions(allSources: Ref<Source[]>) {
     const showTxModal = ref(false);
     const txMode = ref<'deposit' | 'withdraw'>('deposit');
     const activeSourceForTx = ref<Source | null>(null);
-
     const openTransactionModal = (source: Source, mode: 'deposit' | 'withdraw') => {
         activeSourceForTx.value = source;
         txMode.value = mode;
         showTxModal.value = true;
     };
-
     const handleTransactionSubmit = async (payload: { amount: number, timestamp: string }) => {
         if (!activeSourceForTx.value) return;
         try {
