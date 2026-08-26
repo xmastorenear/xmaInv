@@ -39,6 +39,23 @@
         "newGroup": "Новая группа активов",
         "enterName": "Введите название группы",
         "placeholder": "Например: Акции РФ или Криптовалюта",
-        "deleteGroup": "Удалить группу"
+        "deleteGroup": "Удалить группу",
+        "addNew": "Добавить новый актив",
+        "ticker": "Тикер / Название",
+        "amount": "Количество",
+        "pricePerUnit": "Цена за единицу (₽)",
+        "sell": "Продать",
+        "buyMore": "Докупить",
+        "create": "Создать",
+        "cancel": "Отмена",
+        "currentBalance": "Текущий баланс:"
+    },
+    "tbank": {
+        "tokenPlaceholder": "Токен T-Bank Invest",
+        "tokenTitle": "API-токен T-Bank Invest для поиска инструментов",
+        "tokenSave": "Сохранить",
+        "tokenSaved": "✓ Сохранено",
+        "searchPlaceholder": "BTC, AAPL, USD...",
+        "searchLoading": "Поиск..."
     }
 }

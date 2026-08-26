@@ -3,7 +3,6 @@ use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
 
-// Импортируем типы из соседних файлов модуля
 use super::strategy::Strategy;
 use super::source::Source;
 use super::transaction::Transaction;
@@ -18,6 +17,7 @@ pub struct AppData {
     pub asset_groups: Vec<AssetGroup>,
     pub assets: Vec<Asset>,
     pub transactions: Vec<Transaction>,
+    pub tbank_token: Option<String>,
 }
 
 impl AppData {

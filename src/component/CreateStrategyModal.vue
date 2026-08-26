@@ -52,10 +52,10 @@
 
 <style scoped>
     .modal-card {
-        background: #1a1d21;
+        background: #241f33;
         padding: 2rem;
         border-radius: 16px;
-        border: 1px solid #2d333b;
+        border: 1px solid #6d5bd0;
         width: 100%;
         max-width: 360px;
         text-align: center;
@@ -89,21 +89,38 @@
         width: 100%;
         box-sizing: border-box;
         padding: 0.8rem;
-        background: #0f1113;
-        border: 1px solid #2d333b;
+        background: #150f24;
+        border: 1px solid #6d5bd0;
         border-radius: 10px;
         color: white;
         margin-bottom: 1rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
     }
 
     button {
         width: 100%;
         padding: 0.8rem;
-        background: #00c087;
-        color: #000;
+        background: #8b5cf6;
+        color: #ffffff;
         border: none;
         border-radius: 10px;
         font-weight: 700;
         cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    button:hover:not(:disabled) {
+        background: #7c3aed;
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 </style>

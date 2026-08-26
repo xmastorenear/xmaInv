@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+/memory-bank/
+/graphify-out/
+/.roo/
+/.continue/
+/.continue/
+/.vscode/

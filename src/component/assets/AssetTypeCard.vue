@@ -6,7 +6,9 @@
     const props = defineProps<{
         asset: AssetGroup,
         isExpanded: boolean,
-        allAssets: Asset[]
+        allAssets: Asset[],
+        marketPrices?: Record<number, { price: number; stale: boolean }>,
+        pricesLoading?: boolean
     }>();
 
     const emit = defineEmits<{
@@ -17,6 +19,7 @@
         (e: 'buy-more', payload: { asset_id: number; amount: number; price: number }): void;
         (e: 'add-new-asset', payload: any): void;
         (e: 'sell-asset', payload: { asset_id: number; amount: number; price: number }): void;
+        (e: 'refresh-prices'): void;
     }>();
 
 
@@ -41,6 +44,7 @@
         vx: number;
         vy: number;
         style: any;
+        showText: boolean;
     }
 
     const physicsBubbles = ref<PhysicalBubble[]>([]);
@@ -285,7 +289,8 @@
                     y: (realHeight.value / 2) + Math.sin(angle) * spawnRadius,
                     vx: Math.cos(angle) * pushForce,
                     vy: Math.sin(angle) * pushForce,
-                    style: {}
+                    style: {},
+                    showText: false
                 });
             }
         });
@@ -333,6 +338,10 @@
                         position: 'absolute' as const
                     };
                 }
+                for (const c of items) {
+                    c.showText = bubbleTextFits(c);
+                }
+                physicsBubbles.value = [...items];
             }
             animationFrameId = requestAnimationFrame(tick);
         };
@@ -347,6 +356,160 @@
     function formatCurrency(val: number) {
         return new Intl.NumberFormat('ru-RU').format(val) + ' ₽';
     }
+
+    interface MarketInfo {
+        marketValue: number;
+        costValue: number;
+        outer: number;
+        inner: number;
+        deltaPct: number;
+        hasPrice: boolean;
+    }
+
+    const marketInfoMap = computed<Record<number, MarketInfo>>(() => {
+        const map: Record<number, MarketInfo> = {};
+        for (const item of physicsBubbles.value) {
+            const costValue = item.amount * item.buy_price;
+            const mkt = props.marketPrices?.[item.id];
+            if (mkt && typeof mkt.price === 'number' && mkt.price > 0) {
+                const marketValue = mkt.price * item.amount;
+                map[item.id] = {
+                    marketValue,
+                    costValue,
+                    outer: Math.max(marketValue, costValue),
+                    inner: Math.min(marketValue, costValue),
+                    deltaPct: costValue > 0 ? ((marketValue - costValue) / costValue) * 100 : 0,
+                    hasPrice: true
+                };
+            } else {
+                map[item.id] = {
+                    marketValue: costValue,
+                    costValue,
+                    outer: costValue,
+                    inner: costValue,
+                    deltaPct: 0,
+                    hasPrice: false
+                };
+            }
+        }
+        return map;
+    });
+
+    watch(() => props.marketPrices, () => {
+        const baseSizes = calculateTargetSizes(currentGroupAssets.value);
+        physicsBubbles.value.forEach(b => {
+            const info = marketInfoMap.value[b.id];
+            const base = baseSizes[b.id] || 40;
+            if (info && info.outer > 0 && info.costValue > 0) {
+                b.targetSize = base * Math.sqrt(info.outer / info.costValue);
+            } else {
+                b.targetSize = base;
+            }
+        });
+    });
+
+    const frameClass = (item: PhysicalBubble): string => {
+        const info = marketInfoMap.value[item.id];
+        if (!info || !info.hasPrice) return 'no-price';
+        return info.deltaPct >= 0 ? 'profit' : 'loss';
+    };
+
+    const innerPct = (item: PhysicalBubble): number => {
+        const info = marketInfoMap.value[item.id];
+        if (!info || info.outer <= 0) return 100;
+        return Math.round((info.inner / info.outer) * 100);
+    };
+
+    const deltaText = (item: PhysicalBubble): string => {
+        const info = marketInfoMap.value[item.id];
+        if (!info || !info.hasPrice) return '';
+        return `${info.deltaPct >= 0 ? '+' : ''}${info.deltaPct.toFixed(1)}%`;
+    };
+
+    const bubbleValueText = (item: PhysicalBubble): string => {
+        const info = marketInfoMap.value[item.id];
+        if (info && info.hasPrice) return formatCurrency(info.marketValue);
+        return formatCurrency(item.amount * item.buy_price);
+    };
+
+    const bubbleTitle = (item: PhysicalBubble): string => {
+        const info = marketInfoMap.value[item.id];
+        const costStr = formatCurrency(item.amount * item.buy_price);
+        if (!info || !info.hasPrice) {
+            return `${item.ticker}: ${costStr} (нет рыночной цены)`;
+        }
+        const delta = `${info.deltaPct >= 0 ? '+' : ''}${info.deltaPct.toFixed(1)}%`;
+        return `${item.ticker} | ${formatCurrency(info.marketValue)} | Δ ${delta} (от ${costStr})`;
+    };
+
+    const MIN_TEXT_DIAMETER = 58;
+
+    const bubbleFitsText = (item: PhysicalBubble): boolean => {
+        return item.showText;
+    };
+
+    const measureCtx = (() => {
+        const c = document.createElement('canvas');
+        return c.getContext('2d');
+    })();
+    const textWidth = (text: string, bold: boolean, fontSizePx: number): number => {
+        if (!measureCtx) return text.length * fontSizePx * 0.6;
+        measureCtx.font = `${bold ? '700' : '400'} ${fontSizePx}px 'Segoe UI', 'Trebuchet MS', sans-serif`;
+        return measureCtx.measureText(text).width;
+    };
+    const clampPx = (minRem: number, vw: number, maxRem: number): number => {
+        const px = 16;
+        const min = minRem * px;
+        const max = maxRem * px;
+        return Math.min(max, Math.max(min, (vw / 100) * window.innerWidth));
+    };
+    const fontSizes = () => ({
+        tickerPx: clampPx(0.6, 2.5, 1.3),
+        valuePx: clampPx(0.6, 2.0, 1.1),
+        percentPx: clampPx(0.55, 1.8, 1.0),
+    });
+    const rowPad = (fontPx: number): number => (fontPx === fontSizes().percentPx ? 0 : 16);
+    const lineHeight = (fontPx: number): number => Math.round(fontPx * 1.2);
+    const bubbleTextFits = (item: PhysicalBubble): boolean => {
+        const d = Math.min(item.size, item.targetSize ?? item.size);
+        if (d < MIN_TEXT_DIAMETER) return false;
+        const r = d / 2;
+        const { tickerPx, valuePx, percentPx } = fontSizes();
+        const value = bubbleValueText(item);
+        const delta = deltaText(item);
+        const gap = 4; // .bubble-text gap
+        const rows: Array<{ text: string; fontPx: number }> = [
+            { text: item.ticker, fontPx: tickerPx },
+            { text: value, fontPx: valuePx },
+        ];
+        if (delta) rows.push({ text: delta, fontPx: percentPx });
+        const blockH = rows.reduce((a, row) => a + lineHeight(row.fontPx), 0) + gap * (rows.length - 1);
+        let top = -blockH / 2;
+        for (const row of rows) {
+            const h = lineHeight(row.fontPx);
+            const centerOff = top + h / 2;
+            const edgeOff = Math.abs(centerOff) + h / 2;
+            const halfChord = Math.sqrt(Math.max(0, r * r - edgeOff * edgeOff));
+            const avail = 2 * halfChord - 28;
+            const need = textWidth(row.text, true, row.fontPx) + rowPad(row.fontPx);
+            if (need > avail) return false;
+            top += h + gap;
+        }
+        return true;
+    };
+
+    const tooltipBubble = ref<PhysicalBubble | null>(null);
+    const tooltipX = ref(0);
+    const tooltipY = ref(0);
+
+    const showBubbleTooltip = (e: MouseEvent, item: PhysicalBubble) => {
+        tooltipBubble.value = item;
+        tooltipX.value = e.clientX;
+        tooltipY.value = e.clientY;
+    };
+    const hideBubbleTooltip = () => {
+        tooltipBubble.value = null;
+    };
 </script>
 
 <template>
@@ -393,16 +556,45 @@
             <div class="asset-container" ref="containerRef">
                 <div class="grid-overlay"></div>
                 <div v-if="physicsBubbles.length > 0" class="assets-bubbles-stage">
+                    <div v-if="pricesLoading" class="prices-spinner">
+                        <i class="pi pi-spin pi-spinner"></i>
+                    </div>
                     <div
                         v-for="item in physicsBubbles"
                         :key="item.id"
                         class="asset-bubble"
+                        :class="frameClass(item)"
                         :style="item.style"
-                        :title="`${item.ticker}: ${formatCurrency(item.amount * item.buy_price)}`"
+                        @mouseenter="e => showBubbleTooltip(e, item)"
+                        @mousemove="e => showBubbleTooltip(e, item)"
+                        @mouseleave="hideBubbleTooltip"
                         @contextmenu.prevent.stop="e => openBubbleMenu(e, item.id)"
+                        @click.stop="emit('refresh-prices')"
                     >
-                        <span class="bubble-ticker">{{ item.ticker }}</span>
+                        <div
+                            class="bubble-core"
+                            :style="{ width: innerPct(item) + '%', height: innerPct(item) + '%' }"
+                        ></div>
+                        <div v-if="bubbleFitsText(item)" class="bubble-text">
+                            <span class="bubble-ticker">{{ item.ticker }}</span>
+                            <span class="bubble-value">{{ bubbleValueText(item) }}</span>
+                            <span v-if="deltaText(item)" class="bubble-percent" :class="frameClass(item)">
+                                {{ deltaText(item) }}
+                            </span>
+                        </div>
                     </div>
+                </div>
+                <Teleport to="body">
+                    <div v-if="tooltipBubble" class="bubble-tooltip" :style="{ top: tooltipY + 'px', left: tooltipX + 'px' }">
+                        <div class="tooltip-ticker">{{ tooltipBubble.ticker }}</div>
+                        <div class="tooltip-value">{{ bubbleValueText(tooltipBubble) }}</div>
+                        <div v-if="deltaText(tooltipBubble)" class="tooltip-percent" :class="frameClass(tooltipBubble)">
+                            {{ deltaText(tooltipBubble) }}
+                        </div>
+                        <div class="tooltip-cost">{{ bubbleTitle(tooltipBubble) }}</div>
+                    </div>
+                </Teleport>
+                <div class="content-placeholder" v-if="!isExpanded && physicsBubbles.length === 0">
                 </div>
                 <div class="content-placeholder" v-if="!isExpanded && physicsBubbles.length === 0">
                     <span>{{ asset.name }}</span>
@@ -587,28 +779,63 @@
 
     .asset-bubble {
         border-radius: 50%;
-        background: #141619;
-        border: 1px solid rgba(0, 192, 135, 0.3);
+        background: rgba(45, 51, 59, 0.20);
+        border: 2px solid rgba(45, 51, 59, 0.20);
+        box-sizing: border-box;
+        position: absolute;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.6),
-            inset 0 0 12px rgba(0, 192, 135, 0.05),
-            0 0 15px rgba(0, 192, 135, 0.1);
-        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s;
         flex-shrink: 0;
     }
 
+    .asset-bubble.profit {
+        background: rgba(0, 192, 135, 0.20);
+        border-color: rgba(0, 192, 135, 0.20);
+    }
+
+    .asset-bubble.loss {
+        background: rgba(248, 113, 113, 0.20);
+        border-color: rgba(248, 113, 113, 0.20);
+    }
+
+    .asset-bubble.no-price {
+        border-color: rgba(45, 51, 59, 0.20);
+    }
+
     .asset-bubble:hover {
-        border-color: #00c087;
-        background: #0f1113;
         transform: scale(1.04);
-        box-shadow:
-            0 8px 25px rgba(0, 0, 0, 0.7),
-            inset 0 0 8px rgba(0, 192, 135, 0.1),
-            0 0 25px rgba(0, 192, 135, 0.4);
         z-index: 10;
+    }
+
+    .bubble-core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background: #141619;
+        border: 2px solid rgba(45, 51, 59, 0.45);
+        box-sizing: border-box;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .asset-bubble.profit .bubble-core {
+        background: rgba(0, 192, 135, 0.45);
+        border-color: rgba(0, 192, 135, 0.45);
+    }
+
+    .asset-bubble.loss .bubble-core {
+        background: rgba(248, 113, 113, 0.45);
+        border-color: rgba(248, 113, 113, 0.45);
+    }
+
+    .asset-bubble.no-price .bubble-core {
+        background: rgba(45, 51, 59, 0.45);
+        border-color: rgba(45, 51, 59, 0.45);
     }
 
     .bubble-ticker {
@@ -623,6 +850,58 @@
         text-overflow: ellipsis;
         white-space: nowrap;
         user-select: none;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85), 0 1px 1px rgba(0, 0, 0, 0.9);
+    }
+
+    .bubble-value {
+        font-size: clamp(0.6rem, 2vw, 1.1rem);
+        font-weight: 700;
+        color: #ffffff;
+        font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+        max-width: 92%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 0 8px;
+        letter-spacing: 0.02em;
+        text-shadow:
+            0 2px 5px rgba(0, 0, 0, 0.85),
+            0 1px 1px rgba(0, 0, 0, 0.9),
+            0 0 2px rgba(0, 0, 0, 0.6);
+    }
+
+    .bubble-percent {
+        font-size: clamp(0.55rem, 1.8vw, 1rem);
+        font-weight: 700;
+        font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+        white-space: nowrap;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85), 0 1px 1px rgba(0, 0, 0, 0.9);
+    }
+
+    .bubble-percent.profit { color: #00c087; }
+    .bubble-percent.loss { color: #f87171; }
+    .bubble-percent.no-price { color: #64748b; }
+
+    .bubble-text {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-width: 0;
+        max-width: 94%;
+        pointer-events: none;
+    }
+
+    .prices-spinner {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 5;
+        color: #444c56;
+        font-size: 0.9rem;
     }
 
     .content-placeholder {
@@ -715,5 +994,50 @@
 
     .asset-creation-layer {
         z-index: 1000000 !important;
+    }
+
+    .bubble-tooltip {
+        position: fixed;
+        background: #141619;
+        border: 1px solid #2d333b;
+        border-radius: 8px;
+        padding: 6px 10px;
+        min-width: 130px;
+        z-index: 1000001 !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
+        font-size: 0.75rem;
+        transform: translate(14px, 14px);
+        pointer-events: none;
+        white-space: nowrap;
+        color: #fff;
+    }
+
+    .tooltip-ticker {
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .tooltip-value {
+        font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+        font-weight: 700;
+        margin-top: 2px;
+    }
+
+    .tooltip-percent {
+        font-family: 'Segoe UI', 'Trebuchet MS', sans-serif;
+        font-weight: 700;
+        margin-top: 2px;
+    }
+
+    .tooltip-percent.profit { color: #00c087; }
+    .tooltip-percent.loss { color: #f87171; }
+    .tooltip-percent.no-price { color: #64748b; }
+
+    .tooltip-cost {
+        margin-top: 3px;
+        font-size: 0.68rem;
+        color: #94a3b8;
+        border-top: 1px solid #2d333b;
+        padding-top: 3px;
     }
 </style>

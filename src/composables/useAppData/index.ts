@@ -6,15 +6,27 @@ import { useStrategies } from "./useStrategies";
 import { useSources } from "./useSources";
 import { useAssetGroups } from "./useAssetGroups";
 import { useTransactions } from "./useTransactions";
+import { useMarketPrices } from "./useMarketPrices";
 
 export function useAppData() {
     const isLoading = ref(true);
+    const tbankToken = ref<string | null>(null);
+
+    const saveTBankToken = async (token: string): Promise<void> => {
+        try {
+            await invoke('set_tbank_token', { token });
+            tbankToken.value = token;
+            void marketPrices.loadMarketPrices();
+        } catch (e) {
+            console.error("Error saving T-Bank token:", e);
+        }
+    };
 
     const strategies = useStrategies();
-    // Передаем активную стратегию в модули, которые от нее зависят
     const sources = useSources(strategies.strategy);
-    const assetGroups = useAssetGroups(strategies.strategy);
-    const transactions = useTransactions(sources.allSources);
+    const assetGroups = useAssetGroups(strategies.strategy, () => void marketPrices.loadMarketPrices());
+    const marketPrices = useMarketPrices(assetGroups.allAssets);
+
 
     const loadData = async () => {
         try {
@@ -24,6 +36,7 @@ export function useAppData() {
             sources.allSources.value = data.sources || [];
             assetGroups.allAssetGroups.value = data.asset_groups || [];
             assetGroups.allAssets.value = data.assets || [];
+            tbankToken.value = data.tbank_token || null;
 
             if (data.strategy) {
                 strategies.strategy.value = data.strategy;
@@ -34,14 +47,23 @@ export function useAppData() {
                 strategies.showModal.value = true;
             }
         } catch (e) {
-            console.error("Ошибка загрузки данных:", e);
+            console.error("Error loading data:", e);
         } finally {
             isLoading.value = false;
+            void marketPrices.loadMarketPrices();
         }
     };
 
+    const transactions = useTransactions(
+        sources.allSources,    // 1st argument (satisfies the _allSources parameter)
+        assetGroups.allAssets, // 2nd argument (allAssets)
+        loadData               // 3rd argument (loadData)
+    );
+
     return {
         isLoading,
+        tbankToken,
+        saveTBankToken,
         loadData,
 
         strategy: strategies.strategy,
@@ -56,7 +78,7 @@ export function useAppData() {
         showSourceModal: sources.showSourceModal,
         showSourceRenameModal: sources.showSourceRenameModal,
         newSourceName: sources.newSourceName,
-        sourceMenuVisible: sources.sourceMenuVisible, // Переименовано для ясности
+        sourceMenuVisible: sources.sourceMenuVisible, // Renamed for clarity
         sourceMenuX: sources.sourceMenuX,
         sourceMenuY: sources.sourceMenuY,
         openSourceMenu: sources.openSourceMenu,
@@ -83,6 +105,11 @@ export function useAppData() {
         openTransactionModal: transactions.openTransactionModal,
         handleTransactionSubmit: transactions.handleTransactionSubmit,
         handleBuyMoreAsset: assetGroups.handleBuyMoreAsset,
-        handleSellAsset: assetGroups.handleSellAsset
+        handleSellAsset: assetGroups.handleSellAsset,
+
+        marketPrices: marketPrices.marketPrices,
+        pricesLoading: marketPrices.pricesLoading,
+        pricesLoaded: marketPrices.pricesLoaded,
+        loadMarketPrices: marketPrices.loadMarketPrices
     };
 }

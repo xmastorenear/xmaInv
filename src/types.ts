@@ -2,6 +2,7 @@ export interface Strategy {
     id: number;
     name: string;
     color: string;
+    distribution: Record<number, number>;
 }
 
 export interface Source {
@@ -15,9 +16,9 @@ export interface Source {
 
 export interface AssetGroup {
     id: number;
-    strategy_id: number; // Привязка к стратегии
-    name: string;        // Пользовательское название (Акции, Крипта и т.д.)
-    total_value: number; // Общая сумма в этой группе
+    strategy_id: number; // Link to a strategy
+    name: string;        // Custom name (Stocks, Crypto, etc.)
+    total_value: number; // Total value in this group
 }
 
 export interface Asset {
@@ -26,6 +27,7 @@ export interface Asset {
     ticker: string;
     amount: number;
     buy_price: number;
+    uid: string | null;
 }
 
 export interface Transaction {
@@ -36,7 +38,7 @@ export interface Transaction {
     description: string;
 }
 
-// Интерфейс ответа от команды get_data
+// Response interface from the get_data command
 export interface AppDataResponse {
     strategy: Strategy | null;
     all_strategies: Strategy[];
@@ -44,4 +46,22 @@ export interface AppDataResponse {
     asset_groups: AssetGroup[];
     transactions: Transaction[];
     assets: Asset[];
+    tbank_token: string | null;
+}
+
+// Instrument from the T-Bank API search (search_instruments command)
+export interface InstrumentCard {
+    ticker: string;
+    name: string;
+    class_code: string;
+    instrument_type: string;
+    currency: string;
+    uid: string;
+    price: number | null;
+}
+
+export interface AssetPrice {
+    asset_id: number;
+    price: number | null;
+    stale: boolean;
 }
