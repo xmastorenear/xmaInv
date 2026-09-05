@@ -5,7 +5,9 @@
     defineProps<{
         assetGroups: AssetGroup[],
         allAssets: Asset[],
-        expandedId: number | null
+        expandedId: number | null,
+        marketPrices?: Record<number, { price: number; stale: boolean }>,
+        pricesLoading?: boolean
     }>();
 
     const emit = defineEmits<{
@@ -17,6 +19,8 @@
         (e: 'open-menu', event: MouseEvent, id: number): void;
         (e: 'buy-more', payload: any): void;
         (e: 'sell-asset', payload: any): void;
+        (e: 'add-new-asset', payload: any): void;
+        (e: 'refresh-prices'): void;
     }>();
 </script>
 
@@ -47,12 +51,16 @@
                                 :asset="group"
                                 :is-expanded="expandedId === group.id"
                                 :all-assets="allAssets"
+                                :market-prices="marketPrices"
+                                :prices-loading="pricesLoading"
                                 @expand="(id) => emit('expand', id)"
                                 @delete="(id) => emit('delete', id)"
                                 @add-asset="(id) => emit('add-asset', id)"
                                 @delete-asset="(assetId) => emit('delete-asset', assetId)"
                                 @buy-more="(payload) => emit('buy-more', payload)"
                                 @sell-asset="(payload) => emit('sell-asset', payload)"
+                                @add-new-asset="(payload) => emit('add-new-asset', payload)"
+                                @refresh-prices="emit('refresh-prices')"
                             />
                         </Teleport>
                     </div>

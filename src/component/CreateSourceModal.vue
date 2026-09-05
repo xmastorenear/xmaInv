@@ -40,10 +40,10 @@
 
 <style scoped>
     .modal-card {
-        background: #1a1d21;
+        background: #241f33;
         padding: 2rem;
         border-radius: 16px;
-        border: 1px solid #2d333b;
+        border: 1px solid #6d5bd0;
         width: 100%;
         max-width: 360px;
         text-align: center;
@@ -56,12 +56,18 @@
     input {
         width: 100%;
         padding: 12px;
-        background: #0f1113;
-        border: 1px solid #2d333b;
+        background: #150f24;
+        border: 1px solid #6d5bd0;
         border-radius: 8px;
         color: white;
         margin-bottom: 20px;
         box-sizing: border-box;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
     }
 
     .modal-actions { display: flex; gap: 12px; }
@@ -75,11 +81,13 @@
         transition: 0.2s;
     }
 
-    .btn-submit { background: #00c087; color: black; border: none; }
+    .btn-submit { background: #8b5cf6; color: white; border: none; }
+
+    .btn-submit:hover:not(:disabled) { background: #7c3aed; }
 
     .btn-submit:disabled { opacity: 0.5; }
 
-    .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #2d333b; }
+    .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #6d5bd0; }
 
-    .btn-cancel:hover { background: #2d333b; }
+    .btn-cancel:hover { background: #3d3560; }
 </style>

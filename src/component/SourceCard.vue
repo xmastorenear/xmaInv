@@ -60,7 +60,7 @@
     .source-card {
         position: relative;
         overflow: hidden;
-        max-width: 15vw; /* Увеличил, чтобы текст влезал */
+        max-width: 15vw; /* Increased so the text fits */
         min-width: 180px;
         background: #1a1d21;
         border: 1px solid #2d333b;

@@ -16,6 +16,8 @@ const {
     filteredSources,
     isLoading,
     loadData,
+    tbankToken,
+    saveTBankToken,
     showModal,
     showSourceModal,
     showSourceRenameModal,
@@ -42,7 +44,12 @@ const {
     handleDeleteAssetGroup,
     handleDeleteAsset,
     handleBuyMoreAsset,
-    handleSellAsset
+    handleSellAsset,
+    allAssetGroups,
+    handleCreateAsset,
+    marketPrices,
+    pricesLoading,
+    loadMarketPrices
 } = useAppData();
 
 onMounted(loadData);
@@ -52,6 +59,17 @@ const expandedGroupId = ref<number | null>(null);
 const handleExpand = (id: number) => {
     expandedGroupId.value = expandedGroupId.value === id ? null : id;
 };
+
+// Mutually exclusive modal windows
+const openSourceModal = () => {
+    showAssetGroupModal.value = false;
+    showSourceModal.value = true;
+};
+
+const openAssetGroupModal = () => {
+    showSourceModal.value = false;
+    showAssetGroupModal.value = true;
+};
 </script>
 
 <template>
@@ -59,7 +77,7 @@ const handleExpand = (id: number) => {
         <div v-if="isLoading" class="loader">{{ $t('common.loading') }}</div>
         <div v-else class="main-content" :class="{ 'lock-ui': expandedGroupId !== null }">
 
-            <!-- Глобальные модальные окна верхнего уровня через Teleport -->
+            <!-- Global top-level modal windows via Teleport -->
             <Teleport to="body">
                 <Transition name="fade-scale">
                     <div v-if="sourceMenuVisible"
@@ -118,6 +136,8 @@ const handleExpand = (id: number) => {
                 <Transition name="modal-fade">
                     <div v-if="showAssetGroupModal" class="modal-overlay" @click.self="showAssetGroupModal = false">
                         <CreateAssetGroupModal
+                            :active-strategy="strategy"
+                            :existing-groups="allAssetGroups"
                             @create="handleCreateAssetGroup"
                             @close="showAssetGroupModal = false"
                         />
@@ -125,10 +145,12 @@ const handleExpand = (id: number) => {
                 </Transition>
             </Teleport>
 
-            <!-- Шапка интерфейса -->
+            <!-- Interface header -->
             <TheHeader
                 :active-strategy="strategy"
                 :all-strategies="allStrategies"
+                :tbank-token="tbankToken"
+                @save-tbank-token="saveTBankToken"
                 @select-strategy="s => strategy = s"
                 @delete-strategy="handleDeleteStrategy"
                 @rename-strategy="handleRenameStrategy"
@@ -136,29 +158,33 @@ const handleExpand = (id: number) => {
                 @refresh="loadData"
             />
 
-            <!-- Основная рабочая область -->
+            <!-- Main workspace area -->
             <main class="workspace">
                 <SourcesBlock
                     v-if="strategy"
                     :sources="filteredSources"
                     @open-menu="openSourceMenu"
-                    @add-source="showSourceModal = true"
+                    @add-source="openSourceModal"
                     @deposit="s => openTransactionModal(s, 'deposit')"
                     @withdraw="s => openTransactionModal(s, 'withdraw')"
                 />
 
-                <!-- БЛОК: Группы активов (Связка событий исправлена) -->
+                <!-- BLOCK: Asset groups (event wiring fixed) -->
                 <AssetsBlock
                     v-if="strategy"
                     :asset-groups="filteredAssetGroups"
                     :expanded-id="expandedGroupId"
                     :all-assets="allAssets"
-                    @add-group="showAssetGroupModal = true"
+                    :market-prices="marketPrices"
+                    :prices-loading="pricesLoading"
+                    @add-group="openAssetGroupModal"
                     @expand="handleExpand"
                     @delete="handleDeleteAssetGroup"
                     @delete-asset="handleDeleteAsset"
                     @buy-more="handleBuyMoreAsset"
                     @sell-asset="handleSellAsset"
+                    @add-new-asset="handleCreateAsset"
+                    @refresh-prices="loadMarketPrices"
                 />
 
                 <div v-else class="empty-state">
@@ -199,10 +225,10 @@ const handleExpand = (id: number) => {
         backdrop-filter: blur(8px);
     }
     .modal-card {
-        background: #1a1d21;
+        background: #241f33;
         padding: 30px;
         border-radius: 16px;
-        border: 1px solid #2d333b;
+        border: 1px solid #6d5bd0;
         width: 100%;
         max-width: 380px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -211,12 +237,12 @@ const handleExpand = (id: number) => {
     }
     .modal-card h2 { color: white; margin: 0 0 20px 0; font-size: 1.25rem; }
 
-    .rename-input { width: 100%; padding: 14px; background: #0f1113; border: 1px solid #2d333b; border-radius: 10px; color: white; margin-bottom: 25px; font-size: 1rem; outline: none; box-sizing: border-box; }
-    .rename-input:focus { border-color: #00c087; }
+    .rename-input { width: 100%; padding: 14px; background: #150f24; border: 1px solid #6d5bd0; border-radius: 10px; color: white; margin-bottom: 25px; font-size: 1rem; outline: none; box-sizing: border-box; transition: border-color 0.2s, box-shadow 0.2s; }
+      .rename-input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2); }
 
     .modal-actions { display: flex; gap: 12px; }
-    .btn-submit { flex: 1; background: #00c087; color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-    .btn-cancel { flex: 1; background: transparent; color: #94a3b8; border: 1px solid #2d333b; padding: 12px; border-radius: 10px; cursor: pointer; }
+    .btn-submit { flex: 1; background: #8b5cf6; color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+    .btn-cancel { flex: 1; background: transparent; color: #94a3b8; border: 1px solid #6d5bd0; padding: 12px; border-radius: 10px; cursor: pointer; }
 
 
     .modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.3s ease; }
@@ -226,11 +252,11 @@ const handleExpand = (id: number) => {
 
     .loader { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; color: #444c56; }
     .lock-ui .workspace {
-        /* Отключаем ховеры у всех карточек на фоне */
+        /* Disable hover effects on all cards in the background */
         pointer-events: none;
     }
 
-    /* Но возвращаем их для развернутого элемента */
+    /* But restore them for the expanded element */
     .lock-ui .asset-type-card.expanded {
         pointer-events: auto;
     }

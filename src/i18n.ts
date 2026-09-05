@@ -3,8 +3,8 @@ import ru from './locales/ru.json';
 import en from './locales/en.json';
 
 const i18n = createI18n({
-    legacy: false, // Используем Composition API
-    locale: 'ru',  // Язык по умолчанию
+    legacy: false, // Use the Composition API
+    locale: 'ru',  // Default language
     fallbackLocale: 'en',
     messages: {
         ru,

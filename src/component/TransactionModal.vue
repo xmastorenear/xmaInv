@@ -60,7 +60,7 @@
                 <span class="currency">₽</span>
             </div>
 
-            <!-- Поле даты и времени -->
+            <!-- Date and time field -->
             <div class="datetime-wrapper">
                 <label>{{ $t('source.date') }}</label>
                 <input
@@ -97,10 +97,10 @@
     }
 
     .modal-card {
-        background: #1a1d21;
+        background: #241f33;
         padding: 24px;
         border-radius: 16px;
-        border: 1px solid #2d333b;
+        border: 1px solid #6d5bd0;
         width: 320px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
@@ -109,7 +109,7 @@
 
     .icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; }
 
-    .icon.deposit { background: rgba(0, 192, 135, 0.1); color: #00c087; }
+    .icon.deposit { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
 
     .icon.withdraw { background: rgba(248, 113, 113, 0.1); color: #f87171; }
 
@@ -126,8 +126,8 @@
 
     .amount-input input {
         width: 100%;
-        background: #0f1113;
-        border: 1px solid #2d333b;
+        background: #150f24;
+        border: 1px solid #6d5bd0;
         border-radius: 12px;
         padding: 16px;
         font-size: 1.5rem;
@@ -138,9 +138,9 @@
         appearance: none;
     }
 
-    .amount-input input:focus + .currency,
-    .amount-input input:hover + .currency {
-        color: #444c56;
+    .amount-input input:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
     }
 
     .currency {
@@ -148,7 +148,7 @@
         right: 20px;
         top: 50%;
         transform: translateY(-50%);
-        color: #444c56;
+        color: #8b5cf6;
         font-size: 1.2rem;
         pointer-events: none;
         user-select: none;
@@ -166,8 +166,12 @@
     .datetime-wrapper label { font-size: 0.7rem; color: #444c56; text-transform: uppercase; font-weight: bold; padding-left: 4px; }
 
     .datetime-input {
-        background: #0f1113; border: 1px solid #2d333b; border-radius: 8px;
+        background: #150f24; border: 1px solid #6d5bd0; border-radius: 8px;
         padding: 10px; color: white; font-family: inherit; font-size: 0.9rem; outline: none;
+    }
+    .datetime-input:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
     }
     .datetime-input::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
 
@@ -175,9 +179,11 @@
 
     button { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; }
 
-    .btn-cancel { background: #2d333b; color: #94a3b8; }
+    .btn-cancel { background: transparent; color: #94a3b8; border: 1px solid #6d5bd0; }
 
-    .btn-submit.deposit { background: #00c087; color: black; }
+    .btn-cancel:hover { background: #3d3560; }
+
+    .btn-submit.deposit { background: #8b5cf6; color: white; }
 
     .btn-submit.withdraw { background: #f87171; color: white; }
 

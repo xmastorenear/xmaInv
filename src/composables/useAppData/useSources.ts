@@ -8,9 +8,9 @@ export function useSources(activeStrategy: Ref<Strategy | null>) {
     const showSourceRenameModal = ref(false);
     const newSourceName = ref('');
 
-    const sourceMenuVisible = ref(false); // Было menuVisible
-    const sourceMenuX = ref(0);           // Было menuX
-    const sourceMenuY = ref(0);           // Было menuY
+    const sourceMenuVisible = ref(false); // Was menuVisible
+    const sourceMenuX = ref(0);           // Was menuX
+    const sourceMenuY = ref(0);           // Was menuY
     const sourceIdToOp = ref<number | null>(null);
 
     const filteredSources = computed(() => {
@@ -21,7 +21,7 @@ export function useSources(activeStrategy: Ref<Strategy | null>) {
         e.preventDefault();
         e.stopPropagation();
         sourceIdToOp.value = id;
-        sourceMenuX.value = e.clientX; // Используем новые имена
+        sourceMenuX.value = e.clientX; // Use the new names
         sourceMenuY.value = e.clientY;
         sourceMenuVisible.value = true;
 

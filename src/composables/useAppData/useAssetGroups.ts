@@ -2,7 +2,7 @@ import {ref, computed, type Ref} from 'vue';
 import { invoke } from "@tauri-apps/api/core";
 import type { AssetGroup, Strategy, Asset } from "../../types";
 
-export function useAssetGroups(activeStrategy: Ref<Strategy | null>) {
+export function useAssetGroups(activeStrategy: Ref<Strategy | null>, onAssetsChanged?: () => void) {
     const allAssetGroups = ref<AssetGroup[]>([]);
     const allAssets = ref<Asset[]>([]);
 
@@ -16,18 +16,36 @@ export function useAssetGroups(activeStrategy: Ref<Strategy | null>) {
         return allAssetGroups.value.filter(g => g.strategy_id === activeStrategy.value!.id);
     });
 
-    const handleCreateAssetGroup = async (payload: { name: string }) => {
-        const name = payload.name;
-        if (!activeStrategy.value || !name.trim()) return;
+    const handleCreateAssetGroup = async (payload: { name: string, distribution: Record<number, number>, new_group_percent: number }) => {
+        if (!activeStrategy.value || !payload.name.trim()) return;
 
         try {
+            // TYPING MANEUVER: Convert JS object string keys into numeric types for Rust HashMap<u32, f64>
+            const cleanDistribution: Record<number, number> = {};
+            Object.entries(payload.distribution).forEach(([key, val]) => {
+                cleanDistribution[Number(key)] = Number(val);
+            });
+
+            console.log("[DEBUG] Sending group creation data to Rust:", {
+                strategy_id: Number(activeStrategy.value.id),
+                name: payload.name.trim(),
+                distribution: cleanDistribution,
+                new_group_percent: Number(payload.new_group_percent)
+            });
+
+            // Invoke the Tauri command
             const res = await invoke<AssetGroup>('create_asset_group', {
                 strategy_id: Number(activeStrategy.value.id),
-                name: name.trim()
+                name: payload.name.trim(),
+                distribution: cleanDistribution, // Clean map with numeric keys
+                new_group_percent: Number(payload.new_group_percent)
             });
+
             allAssetGroups.value.push(res);
+            console.log("[DEBUG] Group created successfully on the backend:", res);
+
         } catch (e) {
-            console.error("Ошибка при отправке группы в Rust:", e);
+            console.error("Error sending group to Rust:", e);
         } finally {
             showAssetGroupModal.value = false;
         }
@@ -40,26 +58,33 @@ export function useAssetGroups(activeStrategy: Ref<Strategy | null>) {
             console.error("Delete group error:", e);
         }
     };
-    const handleCreateAsset = async (payload: { ticker: string; amount: number; buy_price: number }) => {
-        if (selectedGroupIdForNewAsset.value === null) return;
+    const handleCreateAsset = async (payload: { group_id: number; ticker: string; amount: number; price: number; uid?: string | null }) => {
         try {
-            const res = await invoke<Asset>('create_asset', {
-                group_id: Number(selectedGroupIdForNewAsset.value),
-                ticker: payload.ticker,
-                amount: Number(payload.amount),
-                buy_price: Number(payload.buy_price)
-            });
-            allAssets.value.push(res);
+            console.log("[DEBUG] Sending new asset via create_asset to Rust:", payload);
 
-            const targetGroup = allAssetGroups.value.find(g => g.id === selectedGroupIdForNewAsset.value);
-            if (targetGroup) {
-                targetGroup.total_value += payload.amount * payload.buy_price;
+            // Use the correct create_asset command to create a new asset
+            const newAsset = await invoke<Asset>('create_asset', {
+                group_id: Number(payload.group_id),
+                ticker: payload.ticker.trim().toUpperCase(),
+                amount: Number(payload.amount),
+                buy_price: Number(payload.price),
+                uid: payload.uid ?? null
+            });
+
+            console.log("[DEBUG] Backend created the asset:", newAsset);
+
+            const index = allAssets.value.findIndex(a => Number(a.id) === Number(newAsset.id));
+            if (index !== -1) {
+                allAssets.value[index] = newAsset;
+            } else {
+                allAssets.value.push(newAsset);
             }
+            allAssets.value = [...allAssets.value];
+
+            onAssetsChanged?.();
+
         } catch (e) {
-            console.error("Ошибка при отправке актива в Rust:", e);
-        } finally {
-            showAddAssetModal.value = false;
-            selectedGroupIdForNewAsset.value = null;
+            console.error("Error adding asset via create_asset:", e);
         }
     };
     const handleDeleteAsset = async (assetId: number) => {
@@ -68,67 +93,64 @@ export function useAssetGroups(activeStrategy: Ref<Strategy | null>) {
 
             allAssets.value = allAssets.value.filter(a => a.id !== assetId);
 
-            console.log(`[DEBUG] Актив ${assetId} успешно удален`);
+            onAssetsChanged?.();
+
+            console.log(`[DEBUG] Asset ${assetId} deleted successfully`);
         } catch (e) {
-            console.error("Ошибка удаления актива:", e);
+            console.error("Error deleting asset:", e);
         }
     };
 
     const handleBuyMoreAsset = async (payload: { asset_id: number; amount: number; price: number }) => {
         try {
-            console.log("[DEBUG] Отправка данных докупки в Rust:", payload);
+            console.log("[DEBUG] Sending buy-more data to Rust:", payload);
 
-            await invoke('buy_more_asset', {
+            const updatedAsset = await invoke<Asset>('buy_more_asset', {
                 id: Number(payload.asset_id),
                 added_amount: Number(payload.amount),
                 execution_price: Number(payload.price)
             });
 
-            const target = allAssets.value.find(a => Number(a.id) === Number(payload.asset_id));
-
-            if (target) {
-                const currentTotalCost = Number(target.amount) * Number(target.buy_price);
-                const newTotalCost = Number(payload.amount) * Number(payload.price);
-
-                target.amount = Number(target.amount) + Number(payload.amount);
-                target.buy_price = (currentTotalCost + newTotalCost) / target.amount;
-
-                allAssets.value = [...allAssets.value];
-                console.log("[DEBUG] Массив allAssets успешно обновлен в памяти:", target);
+            const index = allAssets.value.findIndex(a => Number(a.id) === Number(updatedAsset.id));
+            if (index !== -1) {
+                allAssets.value[index] = updatedAsset;
             } else {
-                console.warn(`[DEBUG] Актив с ID ${payload.asset_id} не найден в локальном массиве allAssets!`);
+                allAssets.value.push(updatedAsset);
             }
+            allAssets.value = [...allAssets.value];
+            console.log("[DEBUG] Asset updated with the server value:", updatedAsset);
+
+            onAssetsChanged?.();
         } catch (e) {
-            console.error("Ошибка при выполнении handleBuyMoreAsset:", e);
+            console.error("Error in handleBuyMoreAsset:", e);
         }
     };
     const handleSellAsset = async (payload: { asset_id: number; amount: number; price: number }) => {
         try {
-            await invoke('sell_asset', {
+            const result = await invoke<Asset | null>('sell_asset', {
                 id: Number(payload.asset_id),
                 sell_amount: Number(payload.amount),
                 execution_price: Number(payload.price)
             });
 
-            const targetIndex = allAssets.value.findIndex(a => Number(a.id) === Number(payload.asset_id));
-
-            if (targetIndex !== -1) {
-                const target = allAssets.value[targetIndex];
-
-                if (target.amount <= payload.amount) {
-                    allAssets.value.splice(targetIndex, 1);
-                    console.log(`[DEBUG] Актив ${payload.asset_id} полностью продан и удален.`);
-                } else {
-                    target.amount -= payload.amount;
-                    console.log(`[DEBUG] Частичная продажа. Остаток количества: ${target.amount}`);
+            if (result === null) {
+                allAssets.value = allAssets.value.filter(a => Number(a.id) !== Number(payload.asset_id));
+                console.log(`[DEBUG] Asset ${payload.asset_id} fully sold and removed.`);
+            } else {
+                const index = allAssets.value.findIndex(a => Number(a.id) === Number(result.id));
+                if (index !== -1) {
+                    allAssets.value[index] = result;
+                    allAssets.value = [...allAssets.value];
                 }
-
-                allAssets.value = [...allAssets.value];
+                console.log(`[DEBUG] Partial sell. Remaining quantity: ${result.amount}`);
             }
+            onAssetsChanged?.();
         } catch (e) {
-            console.error("Ошибка при продаже актива:", e);
+            console.error("Error selling asset:", e);
         }
     };
+
+
 
     return {
         allAssetGroups,

@@ -39,6 +39,23 @@
         "newGroup": "New Asset Group",
         "enterName": "Enter group name",
         "placeholder": "Example: US Stocks or Crypto",
-        "deleteGroup": "Delete Group"
+        "deleteGroup": "Delete Group",
+        "addNew": "Add new asset",
+        "ticker": "Ticker / Name",
+        "amount": "Amount",
+        "pricePerUnit": "Price per unit (₽)",
+        "sell": "Sell",
+        "buyMore": "Buy more",
+        "create": "Create",
+        "cancel": "Cancel",
+        "currentBalance": "Current balance:"
+    },
+    "tbank": {
+        "tokenPlaceholder": "T-Bank Invest token",
+        "tokenTitle": "T-Bank Invest API token for instrument search",
+        "tokenSave": "Save",
+        "tokenSaved": "✓ Saved",
+        "searchPlaceholder": "BTC, AAPL, USD...",
+        "searchLoading": "Searching..."
     }
 }
